@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>🍦 Mapa Kids — Arraial 2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#061a0e;color:#fff;height:100dvh;overflow:hidden}
+#hd{position:fixed;top:0;left:0;right:0;z-index:3000;background:linear-gradient(135deg,#0B3D1F,#1B5E35,#E8714A);padding:8px 14px 5px}
+#hd h1{font-size:14px;font-weight:700}
+#hd p{font-size:10px;opacity:.75;margin-top:1px}
+
+/* DASHBOARD */
+#dash{position:fixed;top:50px;left:0;right:0;z-index:2900;background:rgba(6,26,14,.97);
+  border-bottom:1px solid rgba(255,255,255,.1);padding:6px 8px;
+  display:flex;gap:5px;overflow-x:auto;flex-wrap:nowrap;align-items:center}
+.dc{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:4px 9px;flex-shrink:0}
+.dl{font-size:8px;text-transform:uppercase;letter-spacing:.7px;opacity:.45;font-weight:600}
+.dv{font-size:13px;font-weight:700;margin-top:1px}
+.gold{color:#D4A843}.green{color:#4ade80}.coral{color:#E8714A}.teal{color:#2AA8A0}
+#gpill{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;padding:4px 10px;flex-shrink:0;font-size:10px}
+.dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0}
+.dot.on{background:#4ade80;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* FILTERS */
+#filters{position:fixed;top:100px;left:0;right:0;z-index:2800;background:rgba(6,26,14,.97);
+  border-bottom:1px solid rgba(255,255,255,.08);padding:6px 8px;
+  display:flex;gap:5px;overflow-x:auto;flex-wrap:nowrap}
+.fb{padding:5px 12px;border-radius:999px;font-size:11px;font-weight:600;border:2px solid transparent;
+  cursor:pointer;background:rgba(255,255,255,.08);color:#fff;white-space:nowrap;font-family:inherit}
+.fb.on{border-color:#4ade80;background:rgba(74,222,128,.15)}
+
+/* PROGRESS */
+#prog{position:fixed;top:134px;left:0;right:0;z-index:2700;height:4px;background:rgba(255,255,255,.07)}
+#pfill{height:100%;background:linear-gradient(90deg,#2D8A50,#D4A843);width:0%;transition:width .6s}
+
+/* MAP */
+#map{position:fixed;top:138px;left:0;right:0;bottom:118px}
+
+/* NEXT STOP */
+#nxt{position:fixed;bottom:118px;left:0;right:0;z-index:2500;background:rgba(6,26,14,.97);
+  border-top:2px solid #2D8A50;padding:7px 12px;display:flex;gap:8px;align-items:center}
+#nxt.hidden{display:none}
+#nxt.alr{border-color:#E8714A}
+.nb{background:#2D8A50;color:#fff;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;flex-shrink:0}
+.nb.ar{background:#E8714A}
+#nn{font-size:12px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ni{font-size:11px;color:#D4A843;white-space:nowrap;flex-shrink:0}
+#nw{background:#33CCFF;color:#000;border:none;border-radius:7px;padding:6px 10px;
+  font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;flex-shrink:0;font-family:inherit}
+
+/* BOTTOM BAR */
+#btm{position:fixed;bottom:0;left:0;right:0;z-index:3000;background:rgba(6,26,14,.99);
+  border-top:1px solid rgba(255,255,255,.08);padding:8px 8px;display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:7px 11px;border-radius:999px;
+  font-size:11px;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.bg{background:#4285F4;color:#fff}.bw{background:#33CCFF;color:#000}
+.bc{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.12)}
+.bk{background:#E8714A;color:#fff}.bgr{background:#2D8A50;color:#fff}
+
+/* POPUPS */
+.leaflet-popup-content-wrapper{border-radius:14px;padding:0;overflow:hidden;min-width:250px;max-width:300px}
+.leaflet-popup-content{margin:0}
+.ph{padding:11px 14px;font-weight:700;font-size:13px;color:#fff;line-height:1.3}
+.ptag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;
+  background:rgba(255,255,255,.25);margin-bottom:5px;letter-spacing:.5px}
+.pb{padding:10px 14px 12px;background:#fff;color:#1C2B35;font-size:13px}
+.pwhy{font-weight:700;margin-bottom:3px;color:#0B3D1F}
+.pkids{background:#F0FFF5;border-left:3px solid #2D8A50;padding:6px 10px;border-radius:0 8px 8px 0;
+  margin:7px 0;font-size:12px;line-height:1.5}
+.pmeta{font-size:11px;color:#7A8FA0;margin-bottom:8px}
+.pbtns{display:flex;gap:5px;flex-wrap:wrap}
+.pb a{display:inline-flex;align-items:center;gap:3px;padding:5px 9px;border-radius:7px;font-size:11px;font-weight:700;text-decoration:none}
+.pw2{background:#33CCFF;color:#000}.pg2{background:#4285F4;color:#fff}
+.leg{background:rgba(6,26,14,.94);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:8px 11px;font-size:10px;line-height:1.9}
+.li{display:flex;align-items:center;gap:6px}
+.lc{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* COUNTER */
+#cnt{position:fixed;top:142px;left:8px;z-index:2600;background:rgba(6,26,14,.9);
+  border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div id="hd">
+  <h1>🍦 Mapa Kids — Paradas Família · Brasília → Arraial 2026</h1>
+  <p>11 paradas para viajar bem com crianças · GPS em tempo real automático</p>
+</div>
+
+<div id="dash">
+  <div id="gpill"><div class="dot" id="gdot"></div><span id="gtxt">Iniciando GPS…</span></div>
+  <div class="dc"><div class="dl">Próxima kids</div><div class="dv gold" id="d-nxt" style="font-size:11px">—</div></div>
+  <div class="dc"><div class="dl">Distância</div><div class="dv teal" id="d-dist">—</div></div>
+  <div class="dc"><div class="dl">Tempo est.</div><div class="dv" id="d-eta">—</div></div>
+  <div class="dc"><div class="dl">Vel. atual</div><div class="dv green" id="d-spd">—</div></div>
+  <div class="dc"><div class="dl">Progresso</div><div class="dv" id="d-pct">0%</div></div>
+  <div class="dc"><div class="dl">Restam</div><div class="dv coral" id="d-rem">1440 km</div></div>
+</div>
+
+<div id="filters">
+  <button class="fb on" data-f="all">🗺️ Todas</button>
+  <button class="fb" data-f="sorveteria">🍦 Sorveterias</button>
+  <button class="fb" data-f="restaurante">🍽 Restaurantes</button>
+  <button class="fb" data-f="posto">⛽ Postos Kids</button>
+  <button class="fb" data-f="parque">🌳 Espaços p/ correr</button>
+  <button class="fb" data-f="lanche">🥪 Lanches</button>
+</div>
+
+<div id="prog"><div id="pfill"></div></div>
+<div id="cnt">11 paradas</div>
+<div id="map"></div>
+
+<div id="nxt" class="hidden">
+  <span class="nb" id="nb">PRÓXIMA</span>
+  <span id="nn">—</span>
+  <span id="ni">—</span>
+  <a id="nw" href="#" target="_blank">🚗 Waze</a>
+</div>
+
+<div id="btm">
+  <a class="btn bg" id="gmlink" href="#" target="_blank">📍 Google Maps</a>
+  <button class="btn bc" onclick="centerMe()">🎯 Minha posição</button>
+  <a class="btn bgr" href="Roteiro_Arraial_2026_MAPA_PARADAS.html">🗺️ Paradas</a>
+  <a class="btn bc" href="Roteiro_Arraial_2026.html">📋 Guia</a>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const KIDS=[
+  {n:"Bob's Formosa/GO",city:"Formosa · GO",tag:"🍦 SORVETERIA",tipo:"sorveteria",
+   why:"Parada perfeita para o café da manhã das crianças",
+   kids:"Milk-shake, casquinha e combos kids. Funciona a partir das 06h. Estacionamento na frente.",
+   meta:"~115 km · ~06h00 · 20 min",
+   lat:-15.5354,lon:-47.3342,c:"#E8714A",e:"🍦",km:115},
+
+  {n:"Posto Rosário Shell — Área Kids",city:"Alvorada do Norte · GO",tag:"⛽ POSTO KIDS",tipo:"posto",
+   why:"Melhor posto da rota — parada obrigatória, aproveite bem!",
+   kids:"Área gramada externa para correr. Lanchonete com salgados e sucos. Banheiros conservados e Wi-Fi.",
+   meta:"~324 km · ~09h30 · 25 min",
+   lat:-14.218,lon:-46.082,c:"#D4A843",e:"⛽",km:324},
+
+  {n:"Posto Rio Correntina",city:"Correntina · BA",tag:"⛽ POSTO KIDS",tipo:"posto",
+   why:"Espaço aberto para uma corrida rápida",
+   kids:"Área aberta ao lado do posto. Loja com sucos, frutas e lanches. A partir daqui o sinal cai — Waze offline!",
+   meta:"~490 km · ~11h00 · 15 min",
+   lat:-13.3404,lon:-44.643,c:"#2AA8A0",e:"🚻",km:490},
+
+  {n:"Rest. Sabor da Lapa",city:"Bom Jesus da Lapa · BA",tag:"🍽 RESTAURANTE",tipo:"restaurante",
+   why:"Almoço completo — crianças até 5 anos não pagam!",
+   kids:"Self-service por quilo com variedade enorme. Frango, arroz, feijão, frutos do mar. Mesas para grupos grandes.",
+   meta:"~670 km · ~13h00 · 1h",
+   lat:-13.255,lon:-43.4178,c:"#1B5E35",e:"🍽",km:670},
+
+  {n:"Orla do Rio São Francisco",city:"Bom Jesus da Lapa · BA",tag:"🌳 ÁREA P/ CORRER",tipo:"parque",
+   why:"Logo após o almoço — 20 min extras que valem muito!",
+   kids:"Calçadão, área gramada e playground simples beira-rio. Crianças correm à vontade enquanto adultos descansam.",
+   meta:"~670 km · Junto ao almoço · 20 min extras",
+   lat:-13.2512,lon:-43.4101,c:"#2D8A50",e:"🌳",km:672},
+
+  {n:"Sorveteria Tropical — Brumado",city:"Brumado · BA",tag:"🍦 SORVETERIA",tipo:"sorveteria",
+   why:"Parada do fim de tarde — as crianças merecem!",
+   kids:"30+ sabores artesanais. Casquinha, taça e milk-shake. Clima ameno de Brumado torna o sorvete ainda melhor!",
+   meta:"~940 km · ~18h00 · 20 min",
+   lat:-14.1971,lon:-41.6693,c:"#E8714A",e:"🍦",km:940},
+
+  {n:"McDonald's — Vitória da Conquista",city:"Vitória da Conquista · BA",tag:"🍽 RESTAURANTE",tipo:"restaurante",
+   why:"Jantar garantido após 1.050 km — as crianças merecem!",
+   kids:"PlayPlace (área kids coberta). McLanche Feliz. Alternativa: Bob's com milk-shakes. Perto dos hotéis.",
+   meta:"~1.050 km · ~19h30 · Jantar Dia 1",
+   lat:-14.866,lon:-40.841,c:"#1B5E35",e:"🍟",km:1050},
+
+  {n:"Praça Tancredo Neves",city:"Vitória da Conquista · BA",tag:"🌳 ÁREA P/ CORRER",tipo:"parque",
+   why:"Após check-in no hotel — as crianças precisam gastar energia!",
+   kids:"Playground, área gramada, pista de caminhada e iluminação noturna. 5 min dos hotéis. Ideal após jantar.",
+   meta:"~1.050 km · Noite Dia 1 · 30 min",
+   lat:-14.8613,lon:-40.8438,c:"#2D8A50",e:"🌳",km:1051},
+
+  {n:"Lanchonete Sabor Mineiro — Itapetinga",city:"Itapetinga · BA",tag:"🥪 LANCHE",tipo:"lanche",
+   why:"Café da manhã do Dia 2 — tapioca quentinha!",
+   kids:"Tapioca com queijo coalho, cuscuz e suco de frutas nordestinas. As crianças adoram tapioca!",
+   meta:"Dia 2 · ~08h45 · 155 km de VDC · 15 min",
+   lat:-15.2565,lon:-40.2576,c:"#D4A843",e:"🥪",km:1205},
+
+  {n:"Açaíteria Gourmet — Eunápolis",city:"Eunápolis · BA",tag:"🍦 SORVETERIA",tipo:"sorveteria",
+   why:"Açaí fresquinho antes de chegar — a festa começa!",
+   kids:"Açaí artesanal com granola, banana e guaraná. Clima já esquenta — o frio do açaí ajuda! Na BR-367 perto do Atacadão.",
+   meta:"Dia 2 · ~10h30 · Junto ao Atacadão",
+   lat:-16.373,lon:-39.576,c:"#E8714A",e:"🍦",km:1370},
+
+  {n:"Praia de Mucugê — Arraial d'Ajuda 🎉",city:"Arraial d'Ajuda · BA",tag:"🏖 CHEGAMOS!",tipo:"parque",
+   why:"A recompensa final — as crianças vão entrar correndo no mar!",
+   kids:"Mar calmo, água morna, areia fofa. Ideal para todas as idades. As crianças não vão querer sair!",
+   meta:"Dia 2 · ~13h00 · Check-in 14h",
+   lat:-16.479,lon:-39.0659,c:"#1A6B8A",e:"🏖",km:1440},
+];
+
+const TOTAL=1440;
+const GM="https://www.google.com/maps/dir/?api=1&origin=Paran%C3%B3+Bras%C3%ADlia+DF+Brazil&destination=Arraial+d%27Ajuda+Porto+Seguro+BA+Brazil&travelmode=driving&waypoints=Formosa+GO+Brazil|Posse+GO+Brazil|Alvorada+do+Norte+GO+Brazil|Correntina+BA+Brazil|Bom+Jesus+da+Lapa+BA+Brazil|Caetit%C3%A9+BA+Brazil|Brumado+BA+Brazil|Vit%C3%B3ria+da+Conquista+BA+Brazil|Itapetinga+BA+Brazil|Eun%C3%A1polis+BA+Brazil";
+document.getElementById("gmlink").href=GM;
+
+const map=L.map("map",{scrollWheelZoom:true,zoomControl:false});
+L.control.zoom({position:"bottomleft"}).addTo(map);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OSM"}).addTo(map);
+
+// Route line
+L.polyline(KIDS.map(k=>[k.lat,k.lon]),{color:"#2D8A50",weight:5,opacity:.75,dashArray:"9,4"}).addTo(map);
+
+function mkIcon(e,c,sz){sz=sz||38;return L.divIcon({
+  html:`<div style="background:${c};width:${sz}px;height:${sz}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${Math.round(sz*.44)}px;box-shadow:0 3px 10px rgba(0,0,0,.5);border:2.5px solid rgba(255,255,255,.85)">${e}</div>`,
+  iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2+4],className:""
+});}
+
+const MKS={};
+KIDS.forEach((k,i)=>{
+  const wz=`https://waze.com/ul?ll=${k.lat},${k.lon}&navigate=yes`;
+  const gm=`https://www.google.com/maps/dir/?api=1&destination=${k.lat},${k.lon}&travelmode=driving`;
+  const html=`<div class="ph" style="background:${k.c}"><span class="ptag">${k.tag}</span><br>${k.n}</div>
+<div class="pb">
+<div class="pwhy">${k.why}</div>
+<div class="pkids">👧🧒 ${k.kids}</div>
+<div class="pmeta">📍 ${k.meta}</div>
+<div class="pbtns"><a class="pw2" href="${wz}" target="_blank">🚗 Waze</a><a class="pg2" href="${gm}" target="_blank">📍 Maps</a></div>
+</div>`;
+  const m=L.marker([k.lat,k.lon],{icon:mkIcon(k.e,k.c)}).addTo(map);
+  m.bindPopup(html,{maxWidth:300});
+  m._tipo=k.tipo;MKS[i]=m;
+});
+map.fitBounds(L.polyline(KIDS.map(k=>[k.lat,k.lon])).getBounds(),{padding:[30,40]});
+
+// Filters
+let curF="all";
+document.querySelectorAll(".fb").forEach(b=>{
+  b.onclick=()=>{
+    curF=b.dataset.f;
+    document.querySelectorAll(".fb").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    let vis=0;
+    KIDS.forEach((k,i)=>{
+      const show=curF==="all"||k.tipo===curF;
+      if(show){map.addLayer(MKS[i]);vis++;}else{map.removeLayer(MKS[i]);}
+    });
+    document.getElementById("cnt").textContent=vis+" parada"+(vis!==1?"s":"");
+  };
+});
+
+// Legend
+const leg=L.control({position:"topright"});
+leg.onAdd=()=>{const d=L.DomUtil.create("div","leg");
+  d.innerHTML=`<div style="font-weight:700;color:#fff;margin-bottom:4px">Tipos</div>
+<div class="li"><div class="lc" style="background:#E8714A"></div><span style="color:#fff">🍦 Sorveterias</span></div>
+<div class="li"><div class="lc" style="background:#1B5E35"></div><span style="color:#fff">🍽 Restaurantes</span></div>
+<div class="li"><div class="lc" style="background:#D4A843"></div><span style="color:#fff">⛽ Postos Kids</span></div>
+<div class="li"><div class="lc" style="background:#2D8A50"></div><span style="color:#fff">🌳 Espaços</span></div>
+<div class="li"><div class="lc" style="background:#D4A843"></div><span style="color:#fff">🥪 Lanches</span></div>`;
+  return d;};
+leg.addTo(map);
+
+// GPS automático
+let uM=null,lastP=null,lastSpd=0,curIdx=0;
+function hav(a,b,c,d){
+  const R=6371,dr=(c-a)*Math.PI/180,dp=(d-b)*Math.PI/180;
+  const h=Math.sin(dr/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dp/2)**2;
+  return R*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+}
+function nearKm(la,lo){let mn=1e9,km=0;KIDS.forEach(k=>{const d=hav(la,lo,k.lat,k.lon);if(d<mn){mn=d;km=k.km;}});return km;}
+function nxtStop(la,lo){for(let i=Math.max(curIdx,1);i<KIDS.length;i++)return{k:KIDS[i],i,d:hav(la,lo,KIDS[i].lat,KIDS[i].lon)};return null;}
+
+const carIcon=L.divIcon({
+  html:`<div style="width:24px;height:24px;background:#1B5E35;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 7px rgba(74,222,128,.2);display:flex;align-items:center;justify-content:center;font-size:13px">🚗</div>`,
+  iconSize:[24,24],iconAnchor:[12,12],className:""
+});
+
+function onPos(p){
+  const la=p.coords.latitude,lo=p.coords.longitude;
+  const spd=p.coords.speed?Math.round(p.coords.speed*3.6):lastSpd;
+  if(p.coords.speed)lastSpd=spd;
+  document.getElementById("gdot").className="dot on";
+  document.getElementById("gtxt").textContent="GPS ativo";
+  if(!uM)uM=L.marker([la,lo],{icon:carIcon,zIndexOffset:9999}).addTo(map);
+  else uM.setLatLng([la,lo]);
+  const km=nearKm(la,lo),pct=Math.min(100,Math.round(km/TOTAL*100)),rem=Math.max(0,TOTAL-km);
+  document.getElementById("d-pct").textContent=pct+"%";
+  document.getElementById("d-rem").textContent=rem+" km";
+  document.getElementById("d-spd").textContent=spd+" km/h";
+  document.getElementById("pfill").style.width=pct+"%";
+  KIDS.forEach((k,i)=>{if(i>curIdx&&hav(la,lo,k.lat,k.lon)<2)curIdx=i;});
+  const nx=nxtStop(la,lo);
+  if(nx){
+    const dist=nx.d.toFixed(1),eta=spd>5?Math.round(nx.d/spd*60):null;
+    document.getElementById("d-nxt").textContent=nx.k.e+" "+nx.k.n.substring(0,14);
+    document.getElementById("d-dist").textContent=dist+" km";
+    document.getElementById("d-eta").textContent=eta?eta+" min":"—";
+    const np=document.getElementById("nxt");np.classList.remove("hidden");
+    document.getElementById("nn").textContent=nx.k.n;
+    document.getElementById("ni").textContent=dist+" km"+(eta?" · "+eta+"min":"");
+    document.getElementById("nw").href=`https://waze.com/ul?ll=${nx.k.lat},${nx.k.lon}&navigate=yes`;
+    const close=nx.d<5;np.classList.toggle("alr",close);
+    const nb=document.getElementById("nb");nb.textContent=close?"⚠️ CHEGANDO":"PRÓXIMA";nb.className="nb"+(close?" ar":"");
+  }
+  lastP={la,lo};
+}
+function onErr(e){document.getElementById("gtxt").textContent=e.code===1?"❌ Permissão negada":e.code===2?"⚠️ Sinal fraco":"⏱ Timeout";}
+navigator.geolocation?navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:3000,timeout:15000}):document.getElementById("gtxt").textContent="Sem suporte GPS";
+function centerMe(){if(lastP)map.setView([lastP.la,lastP.lo],14);}
+</script>
+</body>
+</html>
